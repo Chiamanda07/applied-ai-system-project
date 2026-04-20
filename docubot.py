@@ -9,8 +9,14 @@ Core DocuBot class responsible for:
 
 import os
 import glob
+import re
 
 class DocuBot:
+    # Minimum number of query words that must appear in a chunk before it
+    # is considered meaningful evidence. Applied only when the query has
+    # more than two tokens; shorter queries use a threshold of 1.
+    _MIN_EVIDENCE_SCORE = 2
+
     def __init__(self, docs_folder="docs", llm_client=None):
         """
         docs_folder: directory containing project documentation files
@@ -20,10 +26,13 @@ class DocuBot:
         self.llm_client = llm_client
 
         # Load documents into memory
-        self.documents = self.load_documents()  # List of (filename, text)
+        self.documents = self.load_documents()  # List of (filename, full_text)
 
-        # Build a retrieval index (implemented in Phase 1)
-        self.index = self.build_index(self.documents)
+        # Split documents into chunks for retrieval
+        self.chunks = self._chunk_documents(self.documents)  # List of (filename, chunk_text)
+
+        # Build a retrieval index over chunks
+        self.index = self.build_index(self.chunks)
 
     # -----------------------------------------------------------
     # Document Loading
@@ -45,26 +54,44 @@ class DocuBot:
         return docs
 
     # -----------------------------------------------------------
+    # Chunking
+    # -----------------------------------------------------------
+
+    def _chunk_documents(self, documents):
+        """
+        Split each document into sections at markdown headers (## or ###).
+        Returns a list of (filename, chunk_text) tuples — one per section.
+        """
+        chunks = []
+        for filename, text in documents:
+            sections = re.split(r'\n(?=#{1,3} )', text)
+            for section in sections:
+                section = section.strip()
+                if len(section) > 20:
+                    chunks.append((filename, section))
+        return chunks
+
+    # -----------------------------------------------------------
     # Index Construction (Phase 1)
     # -----------------------------------------------------------
 
-    def build_index(self, documents):
+    def build_index(self, chunks):
         """
-        TODO (Phase 1):
-        Build a tiny inverted index mapping lowercase words to the documents
-        they appear in.
+        Build an inverted index mapping lowercase tokens to the list of
+        chunk positions (integer indices into self.chunks) where they appear.
 
-        Example structure:
-        {
-            "token": ["AUTH.md", "API_REFERENCE.md"],
-            "database": ["DATABASE.md"]
-        }
-
-        Keep this simple: split on whitespace, lowercase tokens,
-        ignore punctuation if needed.
+        Using positions instead of filenames allows multiple chunks from the
+        same file to be indexed and retrieved independently.
         """
         index = {}
-        # TODO: implement simple indexing
+        for i, (_, text) in enumerate(chunks):
+            for word in text.lower().split():
+                token = word.strip(".,!?;:\"'()[]{}-")
+                if token:
+                    if token not in index:
+                        index[token] = []
+                    if i not in index[token]:
+                        index[token].append(i)
         return index
 
     # -----------------------------------------------------------
@@ -81,8 +108,26 @@ class DocuBot:
         - Count how many appear in the text
         - Return the count as the score
         """
-        # TODO: implement scoring
-        return 0
+        text_lower = text.lower()
+        score = 0
+        for word in query.lower().split():
+            token = word.strip(".,!?;:\"'()[]{}-")
+            if token and token in text_lower:
+                score += 1
+        return score
+
+    def _has_sufficient_evidence(self, score, query_tokens):
+        """
+        Returns True if the score represents meaningful evidence for the query.
+
+        Short queries (1-2 tokens) need score >= 1: even a single match covers
+        half or more of the query. Longer queries require _MIN_EVIDENCE_SCORE
+        matches so that a single coincidental common word cannot pass the filter.
+        """
+        if not query_tokens:
+            return False
+        threshold = 1 if len(query_tokens) <= 2 else self._MIN_EVIDENCE_SCORE
+        return score >= threshold
 
     def retrieve(self, query, top_k=3):
         """
@@ -91,9 +136,28 @@ class DocuBot:
 
         Return a list of (filename, text) sorted by score descending.
         """
-        results = []
-        # TODO: implement retrieval logic
-        return results[:top_k]
+        # Find candidate chunk indices using the index
+        candidate_indices = set()
+        for word in query.lower().split():
+            token = word.strip(".,!?;:\"'()[]{}-")
+            if token in self.index:
+                for idx in self.index[token]:
+                    candidate_indices.add(idx)
+
+        # Score each candidate chunk; discard those without sufficient evidence
+        query_tokens = [w.strip(".,!?;:\"'()[]{}-") for w in query.lower().split()]
+        query_tokens = [t for t in query_tokens if t]
+
+        scored = []
+        for idx in candidate_indices:
+            filename, text = self.chunks[idx]
+            score = self.score_document(query, text)
+            if self._has_sufficient_evidence(score, query_tokens):
+                scored.append((score, filename, text))
+
+        # Sort by score descending and return (filename, text) tuples
+        scored.sort(key=lambda x: x[0], reverse=True)
+        return [(filename, text) for _, filename, text in scored][:top_k]
 
     # -----------------------------------------------------------
     # Answering Modes
