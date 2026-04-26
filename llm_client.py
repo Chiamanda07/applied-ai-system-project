@@ -3,33 +3,19 @@ Gemini client wrapper used by StudyBot.
 
 Handles:
 - Configuring the Gemini client from the GEMINI_API_KEY environment variable
-- Naive "generation only" answers over the full docs corpus (Phase 0)
-- RAG style answers that use only retrieved snippets (Phase 2)
-
-Experiment with:
-- Prompt wording
-- Refusal conditions
-- How strictly the model is instructed to use only the provided context
+- RAG style answers that use only retrieved snippets
+- Quiz generation from study material
 """
 
 import os
+import re
+import json
 import google.generativeai as genai
 
-# Central place to update the model name if needed.
-# You can swap this for a different Gemini model in the future.
 GEMINI_MODEL_NAME = "gemini-2.5-flash"
 
 
 class GeminiClient:
-    """
-    Simple wrapper around the Gemini model.
-
-    Usage:
-        client = GeminiClient()
-        answer = client.naive_answer_over_full_docs(query, all_text)
-        # or
-        answer = client.answer_from_snippets(query, snippets)
-    """
 
     def __init__(self):
         api_key = os.getenv("GEMINI_API_KEY")
@@ -43,69 +29,82 @@ class GeminiClient:
         self.model = genai.GenerativeModel(GEMINI_MODEL_NAME)
 
     # -----------------------------------------------------------
-    # Phase 0: naive generation over full docs
-    # -----------------------------------------------------------
-
-    def naive_answer_over_full_docs(self, query, all_text):
-        # We ignore all_text and send a generic prompt instead
-        prompt = f"""
-    You are a documentation assistant. 
-    Answer this developer question: {query}
-    """
-        response = self.model.generate_content(prompt)
-        return (response.text or "").strip()
-
-    # -----------------------------------------------------------
-    # Phase 2: RAG style generation over retrieved snippets
+    # RAG: answer a question using retrieved snippets
     # -----------------------------------------------------------
 
     def answer_from_snippets(self, query, snippets):
         """
-        Phase 2:
-        Generate an answer using only the retrieved snippets.
-
         snippets: list of (filename, text) tuples selected by StudyBot.retrieve
-
-        The prompt:
-        - Shows each snippet with its filename
-        - Instructs the model to rely only on these snippets
-        - Requires an explicit "I do not know" refusal when needed
         """
-
         if not snippets:
-            return "I do not know based on the docs I have."
+            return "I don't have enough information in the provided material to answer that."
 
         context_blocks = []
         for filename, text in snippets:
-            block = f"File: {filename}\n{text}\n"
-            context_blocks.append(block)
+            context_blocks.append(f"[{filename}]\n{text}\n")
 
         context = "\n\n".join(context_blocks)
 
         prompt = f"""
-You are a cautious documentation assistant helping developers understand a codebase.
+You are a helpful study assistant helping a student understand their study material.
 
 You will receive:
-- A developer question
-- A small set of snippets from project files
+- A student question
+- A small set of relevant excerpts from their study material
 
 Your job:
-- Answer the question using only the information in the snippets.
-- If the snippets do not provide enough evidence, refuse to guess.
+- Answer the question using only the information in the excerpts.
+- If the excerpts do not contain enough information, say so clearly.
 
-Snippets:
+Excerpts:
 {context}
 
-Developer question:
+Student question:
 {query}
 
 Rules:
-- Use only the information in the snippets. Do not invent new functions,
-  endpoints, or configuration values.
-- If the snippets are not enough to answer confidently, reply exactly:
-  "I do not know based on the docs I have."
-- When you do answer, briefly mention which files you relied on.
+- Use only the information in the excerpts. Do not add outside knowledge.
+- If the excerpts are not enough to answer confidently, reply exactly:
+  "I don't have enough information in the provided material to answer that."
+- Keep your answer clear and concise.
 """
-
         response = self.model.generate_content(prompt)
         return (response.text or "").strip()
+
+    # -----------------------------------------------------------
+    # Quiz generation over study material
+    # -----------------------------------------------------------
+
+    def generate_quiz(self, context, num_questions=5):
+        """
+        Prompts Gemini to generate multiple choice questions from the context.
+        Returns a list of dicts: {question, options: {A,B,C,D}, answer}
+        """
+        prompt = f"""
+You are a quiz generator. Create {num_questions} multiple choice questions based on the study material below.
+
+Return ONLY a JSON array with no extra text, using this exact format:
+[
+  {{
+    "question": "...",
+    "options": {{"A": "...", "B": "...", "C": "...", "D": "..."}},
+    "answer": "A"
+  }}
+]
+
+Rules:
+- Each question must have exactly 4 options labeled A, B, C, D.
+- The "answer" field must be the letter of the correct option.
+- Questions should test understanding of key concepts, not just definitions.
+
+Study material:
+{context}
+"""
+        response = self.model.generate_content(prompt)
+        text = (response.text or "").strip()
+
+        # Strip markdown code fences if Gemini wraps the JSON in them
+        text = re.sub(r"^```[a-z]*\n?", "", text)
+        text = re.sub(r"\n?```$", "", text).strip()
+
+        return json.loads(text)

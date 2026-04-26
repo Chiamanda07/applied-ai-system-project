@@ -90,14 +90,52 @@ def run_ask_mode(bot, has_llm):
 
 def run_quiz_mode(bot, has_llm):
     """
-    Mode 2: Gemini generates multiple choice questions from the study material.
-    Full implementation coming in the next step.
+    Mode 2: Gemini generates multiple choice questions, user answers each one,
+    and a final score is shown at the end.
     """
     if not has_llm or bot.llm_client is None:
         print("\nQuiz mode requires a GEMINI_API_KEY.\n")
         return
 
-    print("\nQuiz mode coming soon.\n")
+    try:
+        num = input("\nHow many questions? (press Enter for 5): ").strip()
+        num_questions = int(num) if num.isdigit() and int(num) > 0 else 5
+    except ValueError:
+        num_questions = 5
+
+    print(f"\nGenerating {num_questions} questions from your material...\n")
+
+    # Cap context at 8000 chars to stay within Gemini's prompt limits
+    context = bot.full_corpus_text()[:8000]
+
+    try:
+        questions = bot.llm_client.generate_quiz(context, num_questions)
+    except Exception as e:
+        print(f"Failed to generate quiz: {e}\n")
+        return
+
+    if not questions:
+        print("No questions were generated. Try a different PDF.\n")
+        return
+
+    score = 0
+    for i, q in enumerate(questions, 1):
+        print("=" * 60)
+        print(f"Question {i} of {len(questions)}: {q['question']}\n")
+        for letter, option_text in q["options"].items():
+            print(f"  {letter}) {option_text}")
+
+        answer = input("\nYour answer (A/B/C/D): ").strip().upper()
+        correct = q["answer"].upper()
+
+        if answer == correct:
+            print("Correct!\n")
+            score += 1
+        else:
+            print(f"Incorrect. The correct answer was {correct}.\n")
+
+    print("=" * 60)
+    print(f"Quiz complete! You scored {score}/{len(questions)}.\n")
 
 
 def main():
