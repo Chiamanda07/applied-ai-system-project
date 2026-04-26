@@ -17,12 +17,14 @@ class StudyBot:
     # more than two tokens; shorter queries use a threshold of 1.
     _MIN_EVIDENCE_SCORE = 2
 
-    def __init__(self, docs_folder="docs", llm_client=None):
+    def __init__(self, docs_folder="docs", pdf_path=None, llm_client=None):
         """
-        docs_folder: directory containing project documentation files
-        llm_client: optional Gemini client for LLM based answers
+        docs_folder: directory containing .md/.txt files (used when pdf_path is None)
+        pdf_path:    path to a single PDF study file (takes priority over docs_folder)
+        llm_client:  optional Gemini client for LLM based answers
         """
         self.docs_folder = docs_folder
+        self.pdf_path = pdf_path
         self.llm_client = llm_client
 
         # Load documents into memory
@@ -40,9 +42,13 @@ class StudyBot:
 
     def load_documents(self):
         """
-        Loads all .md and .txt files inside docs_folder.
+        If pdf_path is set, returns an empty list (PDF extraction handled in next step).
+        Otherwise loads all .md and .txt files inside docs_folder.
         Returns a list of tuples: (filename, text)
         """
+        if self.pdf_path is not None:
+            return []
+
         docs = []
         pattern = os.path.join(self.docs_folder, "*.*")
         for path in glob.glob(pattern):

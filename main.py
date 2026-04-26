@@ -7,12 +7,31 @@ Supports three modes:
 3. RAG: retrieval plus LLM generation (Phase 2)
 """
 
+import os
+
 from dotenv import load_dotenv
 load_dotenv()
 
 from studybot import StudyBot
 from llm_client import GeminiClient
 from dataset import SAMPLE_QUERIES
+
+
+def get_pdf_path():
+    """
+    Prompts the user for a PDF file path and validates it exists.
+    Loops until a valid path is entered.
+    """
+    print("Enter the path to your PDF study material.")
+    while True:
+        path = input("PDF path: ").strip().strip('"').strip("'")
+        if not path.lower().endswith(".pdf"):
+            print("File must be a .pdf. Try again.\n")
+            continue
+        if not os.path.isfile(path):
+            print(f"File not found: {path}. Try again.\n")
+            continue
+        return path
 
 
 def try_create_llm_client():
@@ -133,8 +152,10 @@ def main():
     print("StudyBot Tinker Activity")
     print("========================\n")
 
+    pdf_path = get_pdf_path()
     llm_client, has_llm = try_create_llm_client()
-    bot = StudyBot(llm_client=llm_client)
+    bot = StudyBot(pdf_path=pdf_path, llm_client=llm_client)
+    print(f"\nLoaded: {os.path.basename(pdf_path)}\n")
 
     while True:
         choice = choose_mode(has_llm)
