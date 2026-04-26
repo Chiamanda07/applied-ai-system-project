@@ -19,7 +19,7 @@ StudyBot matters because reading is passive. Asking questions and taking quizzes
 
 ## Architecture Overview
 
-![System Diagram](assets/system_diagram.png)
+![System Diagram](assets/system_design.png)
 
 StudyBot is built around a **RAG (Retrieval Augmented Generation)** pipeline:
 
