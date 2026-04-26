@@ -8,7 +8,7 @@ This project was originally built as **DocuBot**, a developer documentation assi
 
 ## Title and Summary
 
-**StudyBot** is an AI-powered study assistant that lets students upload any PDF — lecture notes, textbook chapters, study guides — and interact with it in two ways:
+**StudyBot** is an AI-powered study assistant that lets students upload any PDF and interact with it in two ways:
 
 1. **Ask a question** — get a focused answer drawn directly from your material
 2. **Generate a quiz** — receive multiple choice questions to test your understanding
