@@ -90,9 +90,9 @@ Steps to convert DocuBot into a study bot that accepts user-uploaded study mater
 - [x] Rename the project from DocuBot to StudyBot and update references across all files
 - [x] Add `pdfplumber` to `requirements.txt` for PDF text extraction
 - [x] Update `main.py` to accept a PDF file path as input at startup instead of loading from `docs/`
-- [ ] Update `studybot.py` to extract and chunk text from the uploaded PDF using `pdfplumber` instead of reading a folder of docs
-- [ ] Replace the three existing modes with two new modes: **Ask a question** and **Generate quiz**
-- [ ] In Ask mode, use the existing RAG pipeline to answer questions about the uploaded study material
+- [x] Update `studybot.py` to extract and chunk text from the uploaded PDF using `pdfplumber` instead of reading a folder of docs
+- [x] Replace the three existing modes with two new modes: **Ask a question** and **Generate quiz**
+- [x] In Ask mode, use the existing RAG pipeline to answer questions about the uploaded study material
 - [ ] In Quiz mode, prompt Gemini to generate multiple choice questions (with 4 options and a correct answer) from the retrieved content
 - [ ] Add a quiz loop in `main.py` that displays each question, collects the user's answer, and shows whether it was correct
 - [ ] Update `dataset.py` to replace dev-focused sample queries with generic study-style sample questions

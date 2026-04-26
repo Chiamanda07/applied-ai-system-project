@@ -10,6 +10,7 @@ Core StudyBot class responsible for:
 import os
 import glob
 import re
+import pdfplumber
 
 class StudyBot:
     # Minimum number of query words that must appear in a chunk before it
@@ -42,12 +43,12 @@ class StudyBot:
 
     def load_documents(self):
         """
-        If pdf_path is set, returns an empty list (PDF extraction handled in next step).
+        If pdf_path is set, extracts text from the PDF using pdfplumber.
         Otherwise loads all .md and .txt files inside docs_folder.
         Returns a list of tuples: (filename, text)
         """
         if self.pdf_path is not None:
-            return []
+            return self._load_pdf()
 
         docs = []
         pattern = os.path.join(self.docs_folder, "*.*")
@@ -59,21 +60,53 @@ class StudyBot:
                 docs.append((filename, text))
         return docs
 
+    def _load_pdf(self):
+        """
+        Extracts text from each page of the PDF and joins them.
+        Returns a list with a single (filename, full_text) tuple.
+        """
+        filename = os.path.basename(self.pdf_path)
+        pages = []
+        with pdfplumber.open(self.pdf_path) as pdf:
+            for page in pdf.pages:
+                text = page.extract_text()
+                if text:
+                    pages.append(text)
+        full_text = "\n\n".join(pages)
+        return [(filename, full_text)]
+
     # -----------------------------------------------------------
     # Chunking
     # -----------------------------------------------------------
 
+    # Max characters per chunk — keeps each snippet well within Gemini's token limit
+    _MAX_CHUNK_CHARS = 1000
+
     def _chunk_documents(self, documents):
         """
-        Split each document into sections at markdown headers (## or ###).
-        Returns a list of (filename, chunk_text) tuples — one per section.
+        For markdown files: split on headers (## / ###).
+        For PDF text (no headers): split on paragraph breaks instead.
+        Any section longer than _MAX_CHUNK_CHARS is further split into
+        fixed-size pieces so no single chunk overwhelms the LLM prompt.
+        Returns a list of (filename, chunk_text) tuples.
         """
         chunks = []
         for filename, text in documents:
             sections = re.split(r'\n(?=#{1,3} )', text)
+            if len(sections) <= 1:
+                # No markdown headers — PDF or plain text: split by paragraph
+                sections = re.split(r'\n{2,}', text)
+
             for section in sections:
                 section = section.strip()
-                if len(section) > 20:
+                if len(section) <= 20:
+                    continue
+                if len(section) > self._MAX_CHUNK_CHARS:
+                    for i in range(0, len(section), self._MAX_CHUNK_CHARS):
+                        piece = section[i:i + self._MAX_CHUNK_CHARS].strip()
+                        if len(piece) > 20:
+                            chunks.append((filename, piece))
+                else:
                     chunks.append((filename, section))
         return chunks
 

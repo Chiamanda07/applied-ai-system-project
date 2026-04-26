@@ -1,10 +1,9 @@
 """
-CLI runner for the StudyBot tinker activity.
+CLI runner for StudyBot.
 
-Supports three modes:
-1. Naive LLM generation over all docs (Phase 0)
-2. Retrieval only (Phase 1)
-3. RAG: retrieval plus LLM generation (Phase 2)
+Supports two modes:
+1. Ask a question — answers using the RAG pipeline over your study material
+2. Generate quiz  — Gemini creates multiple choice questions from your material
 """
 
 import os
@@ -14,7 +13,6 @@ load_dotenv()
 
 from studybot import StudyBot
 from llm_client import GeminiClient
-from dataset import SAMPLE_QUERIES
 
 
 def get_pdf_path():
@@ -23,6 +21,8 @@ def get_pdf_path():
     Loops until a valid path is entered.
     """
     print("Enter the path to your PDF study material.")
+    print("Tip: For best results keep the PDF under 50 pages (~150,000 characters).")
+    print("Longer files may slow down loading and reduce answer quality.\n")
     while True:
         path = input("PDF path: ").strip().strip('"').strip("'")
         if not path.lower().endswith(".pdf"):
@@ -45,112 +45,64 @@ def try_create_llm_client():
     except RuntimeError as exc:
         print("Warning: LLM features are disabled.")
         print(f"Reason: {exc}")
-        print("You can still run retrieval only mode.\n")
+        print("A GEMINI_API_KEY is required for both modes.\n")
         return None, False
 
 
 def choose_mode(has_llm):
     """
     Asks the user which mode to run.
-    Returns "1", "2", "3", or "q".
+    Returns "1", "2", or "q".
     """
     print("Choose a mode:")
     if has_llm:
-        print("  1) Naive LLM over full docs (no retrieval)")
+        print("  1) Ask a question")
+        print("  2) Generate quiz")
     else:
-        print("  1) Naive LLM over full docs (unavailable, no GEMINI_API_KEY)")
-    print("  2) Retrieval only (no LLM)")
-    if has_llm:
-        print("  3) RAG (retrieval + LLM)")
-    else:
-        print("  3) RAG (unavailable, no GEMINI_API_KEY)")
+        print("  1) Ask a question  (unavailable — no GEMINI_API_KEY)")
+        print("  2) Generate quiz   (unavailable — no GEMINI_API_KEY)")
     print("  q) Quit")
 
     choice = input("Enter choice: ").strip().lower()
     return choice
 
 
-def get_query_or_use_samples():
+def run_ask_mode(bot, has_llm):
     """
-    Ask the user if they want to run all sample queries or a single custom query.
-
-    Returns:
-        queries: list of strings
-        label: short description of the source of queries
-    """
-    print("\nPress Enter to run built in sample queries.")
-    custom = input("Or type a single custom query: ").strip()
-
-    if custom:
-        return [custom], "custom query"
-    else:
-        return SAMPLE_QUERIES, "sample queries"
-
-
-def run_naive_llm_mode(bot, has_llm):
-    """
-    Mode 1:
-    Naive LLM generation over the full docs corpus.
+    Mode 1: user types a question, StudyBot answers using the RAG pipeline.
     """
     if not has_llm or bot.llm_client is None:
-        print("\nNaive LLM mode is not available (no GEMINI_API_KEY).\n")
+        print("\nAsk mode requires a GEMINI_API_KEY.\n")
         return
 
-    queries, label = get_query_or_use_samples()
-    print(f"\nRunning naive LLM mode on {label}...\n")
+    question = input("\nAsk a question about your material: ").strip()
+    if not question:
+        print("No question entered.\n")
+        return
 
-    all_text = bot.full_corpus_text()
-
-    for query in queries:
-        print("=" * 60)
-        print(f"Question: {query}\n")
-        answer = bot.llm_client.naive_answer_over_full_docs(query, all_text)
-        print("Answer:")
-        print(answer)
-        print()
+    print()
+    print("=" * 60)
+    answer = bot.answer_rag(question)
+    print("Answer:")
+    print(answer)
+    print()
 
 
-def run_retrieval_only_mode(bot):
+def run_quiz_mode(bot, has_llm):
     """
-    Mode 2:
-    Retrieval only answers. No LLM involved.
-    """
-    queries, label = get_query_or_use_samples()
-    print(f"\nRunning retrieval only mode on {label}...\n")
-
-    for query in queries:
-        print("=" * 60)
-        print(f"Question: {query}\n")
-        answer = bot.answer_retrieval_only(query)
-        print("Retrieved snippets:")
-        print(answer)
-        print()
-
-
-def run_rag_mode(bot, has_llm):
-    """
-    Mode 3:
-    Retrieval plus LLM generation.
+    Mode 2: Gemini generates multiple choice questions from the study material.
+    Full implementation coming in the next step.
     """
     if not has_llm or bot.llm_client is None:
-        print("\nRAG mode is not available (no GEMINI_API_KEY).\n")
+        print("\nQuiz mode requires a GEMINI_API_KEY.\n")
         return
 
-    queries, label = get_query_or_use_samples()
-    print(f"\nRunning RAG mode on {label}...\n")
-
-    for query in queries:
-        print("=" * 60)
-        print(f"Question: {query}\n")
-        answer = bot.answer_rag(query)
-        print("Answer:")
-        print(answer)
-        print()
+    print("\nQuiz mode coming soon.\n")
 
 
 def main():
-    print("StudyBot Tinker Activity")
-    print("========================\n")
+    print("StudyBot")
+    print("========\n")
 
     pdf_path = get_pdf_path()
     llm_client, has_llm = try_create_llm_client()
@@ -164,13 +116,11 @@ def main():
             print("\nGoodbye.")
             break
         elif choice == "1":
-            run_naive_llm_mode(bot, has_llm)
+            run_ask_mode(bot, has_llm)
         elif choice == "2":
-            run_retrieval_only_mode(bot)
-        elif choice == "3":
-            run_rag_mode(bot, has_llm)
+            run_quiz_mode(bot, has_llm)
         else:
-            print("\nUnknown choice. Please pick 1, 2, 3, or q.\n")
+            print("\nUnknown choice. Please pick 1, 2, or q.\n")
 
 
 if __name__ == "__main__":
