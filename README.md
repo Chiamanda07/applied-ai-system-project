@@ -1,6 +1,6 @@
 # StudyBot
 
-## Original Project: DocuBot
+## Original Project: [DocuBot](https://github.com/Chiamanda07/ai110-docubot-starter)
 
 This project was originally built as **DocuBot**, a developer documentation assistant created during Modules 1–3. DocuBot answered questions about a codebase by loading markdown files from a `docs/` folder and supporting three modes: naive LLM generation, keyword-based retrieval only, and Retrieval Augmented Generation (RAG). It was designed to help developers quickly find answers across technical documentation without reading through every file manually.
 
@@ -40,7 +40,7 @@ Human interaction happens at three points: uploading the PDF, asking questions, 
 ### 1. Clone the repository
 
 ```
-git clone <your-repo-url>
+git clone https://github.com/Chiamanda07/applied-ai-system-project
 cd applied-ai-system-project
 ```
 
