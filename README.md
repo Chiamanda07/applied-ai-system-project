@@ -226,4 +226,4 @@ Steps taken to convert DocuBot into StudyBot:
 - [x] Caps PDF context at 8,000 characters before sending to Gemini
 - [x] Warn the user immediately if the PDF has no extractable text (e.g. scanned/image-only PDF)
 - [x] Prompt the user to re-enter their answer if they type something other than A, B, C, or D
-- [x] Handle the case where Gemini returns fewer questions than requested
+- [x] Handle the case where Gemini returns fewer questions than requested.
