@@ -95,6 +95,22 @@ Steps to convert DocuBot into a study bot that accepts user-uploaded study mater
 - [x] In Ask mode, use the existing RAG pipeline to answer questions about the uploaded study material
 - [x] In Quiz mode, prompt Gemini to generate multiple choice questions (with 4 options and a correct answer) from the retrieved content
 - [x] Add a quiz loop in `main.py` that displays each question, collects the user's answer, and shows whether it was correct
-- [ ] Update `dataset.py` to replace dev-focused sample queries with generic study-style sample questions
-- [ ] Update `llm_client.py` with a new prompt template for quiz generation (separate from the Q&A prompt)
+- [x] Update `dataset.py` to replace dev-focused sample queries with generic study-style sample questions
+- [x] Update `llm_client.py` with a new prompt template for quiz generation (separate from the Q&A prompt)
 - [ ] Update the README to reflect the new name, modes, and usage instructions
+
+---
+
+## Guardrails
+
+### Already in place
+- [x] Rejects non-PDF files or missing file paths at startup
+- [x] Warns and disables LLM modes if `GEMINI_API_KEY` is missing
+- [x] Returns a safe fallback message if no relevant snippets are retrieved
+- [x] Wraps quiz JSON parsing in a try/except so a bad response doesn't crash the app
+- [x] Caps PDF context at 8,000 characters before sending to Gemini
+
+### Gaps to fix
+- [x] Warn the user immediately if the PDF has no extractable text (e.g. scanned/image-only PDF)
+- [x] Prompt the user to re-enter their answer if they type something other than A, B, C, or D
+- [x] Handle the case where Gemini returns fewer questions than requested

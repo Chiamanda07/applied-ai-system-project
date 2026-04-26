@@ -118,6 +118,9 @@ def run_quiz_mode(bot, has_llm):
         print("No questions were generated. Try a different PDF.\n")
         return
 
+    if len(questions) < num_questions:
+        print(f"Note: only {len(questions)} question(s) could be generated from this material (you requested {num_questions}).\n")
+
     score = 0
     for i, q in enumerate(questions, 1):
         print("=" * 60)
@@ -125,7 +128,11 @@ def run_quiz_mode(bot, has_llm):
         for letter, option_text in q["options"].items():
             print(f"  {letter}) {option_text}")
 
-        answer = input("\nYour answer (A/B/C/D): ").strip().upper()
+        while True:
+            answer = input("\nYour answer (A/B/C/D): ").strip().upper()
+            if answer in ("A", "B", "C", "D"):
+                break
+            print("Invalid input. Please enter A, B, C, or D.")
         correct = q["answer"].upper()
 
         if answer == correct:
@@ -144,7 +151,11 @@ def main():
 
     pdf_path = get_pdf_path()
     llm_client, has_llm = try_create_llm_client()
-    bot = StudyBot(pdf_path=pdf_path, llm_client=llm_client)
+    try:
+        bot = StudyBot(pdf_path=pdf_path, llm_client=llm_client)
+    except ValueError as e:
+        print(f"\nError: {e}\n")
+        return
     print(f"\nLoaded: {os.path.basename(pdf_path)}\n")
 
     while True:

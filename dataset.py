@@ -10,14 +10,14 @@ Optional helper module containing:
 # -----------------------------------------------------------
 
 SAMPLE_QUERIES = [
-    "Where is the auth token generated?",
-    "What environment variables are required for authentication?",
-    "How do I connect to the database?",
-    "Which endpoint lists all users?",
-    "What does the /api/projects/<project_id> route return?",
-    "Is there any mention of payment processing in these docs?",
-    "How does a client refresh an access token?",
-    "Which fields are stored in the users table?",
+    "What are the main concepts covered in this material?",
+    "Can you summarize the key points of this topic?",
+    "What is the definition of the main term introduced here?",
+    "How does the process described here work step by step?",
+    "What are the differences between the two ideas mentioned?",
+    "Why is this concept important?",
+    "What examples are given to explain this topic?",
+    "What are the key takeaways from this section?",
 ]
 
 # -----------------------------------------------------------

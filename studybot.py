@@ -73,6 +73,12 @@ class StudyBot:
                 if text:
                     pages.append(text)
         full_text = "\n\n".join(pages)
+        if not full_text.strip():
+            raise ValueError(
+                f"No text could be extracted from '{filename}'. "
+                "This usually means the PDF is scanned or image-based. "
+                "Try a PDF with a real text layer."
+            )
         return [(filename, full_text)]
 
     # -----------------------------------------------------------
