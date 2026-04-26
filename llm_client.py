@@ -1,5 +1,5 @@
 """
-Gemini client wrapper used by DocuBot.
+Gemini client wrapper used by StudyBot.
 
 Handles:
 - Configuring the Gemini client from the GEMINI_API_KEY environment variable
@@ -64,7 +64,7 @@ class GeminiClient:
         Phase 2:
         Generate an answer using only the retrieved snippets.
 
-        snippets: list of (filename, text) tuples selected by DocuBot.retrieve
+        snippets: list of (filename, text) tuples selected by StudyBot.retrieve
 
         The prompt:
         - Shows each snippet with its filename

@@ -1,12 +1,12 @@
 """
-A lightweight evaluation harness for DocuBot.
+A lightweight evaluation harness for StudyBot.
 
 This module helps students compare:
 - naive generation over the full docs
 - retrieval only answers
 - RAG answers (retrieval + Gemini)
 
-The evaluation is intentionally simple: it checks whether DocuBot retrieves
+The evaluation is intentionally simple: it checks whether StudyBot retrieves
 the correct files for each query and reports a hit rate.
 """
 
@@ -53,7 +53,7 @@ def expected_files_for_query(query):
 
 def evaluate_retrieval(bot, top_k=3):
     """
-    Runs DocuBot's retrieval system against SAMPLE_QUERIES.
+    Runs StudyBot's retrieval system against SAMPLE_QUERIES.
     Returns a tuple: (hit_rate, detailed_results)
 
     hit_rate: fraction of queries where at least one retrieved snippet's
@@ -109,10 +109,10 @@ def print_eval_results(hit_rate, results):
 # -----------------------------------------------------------
 
 if __name__ == "__main__":
-    from docubot import DocuBot
+    from studybot import StudyBot
 
     print("Running retrieval evaluation...\n")
-    bot = DocuBot()
+    bot = StudyBot()
 
     hit_rate, results = evaluate_retrieval(bot)
     print_eval_results(hit_rate, results)

@@ -1,5 +1,5 @@
 """
-Core DocuBot class responsible for:
+Core StudyBot class responsible for:
 - Loading documents from the docs/ folder
 - Building a simple retrieval index (Phase 1)
 - Retrieving relevant snippets (Phase 1)
@@ -11,7 +11,7 @@ import os
 import glob
 import re
 
-class DocuBot:
+class StudyBot:
     # Minimum number of query words that must appear in a chunk before it
     # is considered meaningful evidence. Applied only when the query has
     # more than two tokens; shorter queries use a threshold of 1.

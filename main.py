@@ -1,5 +1,5 @@
 """
-CLI runner for the DocuBot tinker activity.
+CLI runner for the StudyBot tinker activity.
 
 Supports three modes:
 1. Naive LLM generation over all docs (Phase 0)
@@ -10,7 +10,7 @@ Supports three modes:
 from dotenv import load_dotenv
 load_dotenv()
 
-from docubot import DocuBot
+from studybot import StudyBot
 from llm_client import GeminiClient
 from dataset import SAMPLE_QUERIES
 
@@ -130,11 +130,11 @@ def run_rag_mode(bot, has_llm):
 
 
 def main():
-    print("DocuBot Tinker Activity")
-    print("=======================\n")
+    print("StudyBot Tinker Activity")
+    print("========================\n")
 
     llm_client, has_llm = try_create_llm_client()
-    bot = DocuBot(llm_client=llm_client)
+    bot = StudyBot(llm_client=llm_client)
 
     while True:
         choice = choose_mode(has_llm)

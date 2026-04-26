@@ -80,3 +80,21 @@ You will primarily work in:
 - Python 3.9+
 - A Gemini API key for LLM features (only needed for modes 1 and 3)
 - No database, no server setup, no external services besides LLM calls
+
+---
+
+## Changes
+
+Steps to convert DocuBot into a study bot that accepts user-uploaded study materials (PDF) and supports Q&A and quiz modes.
+
+- [x] Rename the project from DocuBot to StudyBot and update references across all files
+- [x] Add `pdfplumber` to `requirements.txt` for PDF text extraction
+- [ ] Update `main.py` to accept a PDF file path as input at startup instead of loading from `docs/`
+- [ ] Update `docubot.py` to extract and chunk text from the uploaded PDF using `pdfplumber` instead of reading a folder of docs
+- [ ] Replace the three existing modes with two new modes: **Ask a question** and **Generate quiz**
+- [ ] In Ask mode, use the existing RAG pipeline to answer questions about the uploaded study material
+- [ ] In Quiz mode, prompt Gemini to generate multiple choice questions (with 4 options and a correct answer) from the retrieved content
+- [ ] Add a quiz loop in `main.py` that displays each question, collects the user's answer, and shows whether it was correct
+- [ ] Update `dataset.py` to replace dev-focused sample queries with generic study-style sample questions
+- [ ] Update `llm_client.py` with a new prompt template for quiz generation (separate from the Q&A prompt)
+- [ ] Update the README to reflect the new name, modes, and usage instructions
