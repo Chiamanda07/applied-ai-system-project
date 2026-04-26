@@ -1,6 +1,6 @@
 # StudyBot
 
-## Original Project: DocuBot
+## Original Project: [DocuBot](https://github.com/Chiamanda07/ai110-docubot-starter)
 
 This project was originally built as **DocuBot**, a developer documentation assistant created during Modules 1–3. DocuBot answered questions about a codebase by loading markdown files from a `docs/` folder and supporting three modes: naive LLM generation, keyword-based retrieval only, and Retrieval Augmented Generation (RAG). It was designed to help developers quickly find answers across technical documentation without reading through every file manually.
 
@@ -8,7 +8,7 @@ This project was originally built as **DocuBot**, a developer documentation assi
 
 ## Title and Summary
 
-**StudyBot** is an AI-powered study assistant that lets students upload any PDF — lecture notes, textbook chapters, study guides — and interact with it in two ways:
+**StudyBot** is an AI-powered study assistant that lets students upload any PDF and interact with it in two ways:
 
 1. **Ask a question** — get a focused answer drawn directly from your material
 2. **Generate a quiz** — receive multiple choice questions to test your understanding
@@ -19,7 +19,7 @@ StudyBot matters because reading is passive. Asking questions and taking quizzes
 
 ## Architecture Overview
 
-![System Diagram](assets/system_diagram.png)
+![System Diagram](assets/system_design.png)
 
 StudyBot is built around a **RAG (Retrieval Augmented Generation)** pipeline:
 
@@ -40,7 +40,7 @@ Human interaction happens at three points: uploading the PDF, asking questions, 
 ### 1. Clone the repository
 
 ```
-git clone <your-repo-url>
+git clone https://github.com/Chiamanda07/applied-ai-system-project
 cd applied-ai-system-project
 ```
 
