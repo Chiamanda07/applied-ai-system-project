@@ -2,11 +2,11 @@
 
 ## Original Project: [DocuBot](https://github.com/Chiamanda07/ai110-docubot-starter)
 
-This project was originally built as **DocuBot**, a developer documentation assistant created during Modules 1–3. DocuBot answered questions about a codebase by loading markdown files from a `docs/` folder and supporting three modes: naive LLM generation, keyword-based retrieval only, and Retrieval Augmented Generation (RAG). It was designed to help developers quickly find answers across technical documentation without reading through every file manually.
+This project was originally built as **DocuBot**. DocuBot answered questions about a codebase by loading markdown files from a `docs/` folder and supporting three modes: naive LLM generation, keyword-based retrieval only, and Retrieval Augmented Generation (RAG). It was designed to help developers quickly find answers across technical documentation without reading through every file manually.
 
 ---
 
-## Title and Summary
+## Summary
 
 **StudyBot** is an AI-powered study assistant that lets students upload any PDF and interact with it in two ways:
 
