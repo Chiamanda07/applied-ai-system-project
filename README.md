@@ -174,7 +174,7 @@ Quiz generation sends content directly without retrieval, so a hard cap prevents
 - Gemini occasionally wrapped JSON responses in code fences, breaking `json.loads` — fixed with regex preprocessing
 
 **What I learned:**
-- LLM outputs need defensive parsing — even well-prompted models add unexpected formatting
+- LLM outputs need defensive parsing. Even well-prompted models add unexpected formatting
 - Retrieval quality depends heavily on chunk size; too large and precision drops, too small and context is lost
 - Guardrails need to be designed upfront, not added after; silent failures (empty PDF, no API key) are harder to debug than loud ones
 
@@ -184,9 +184,9 @@ Quiz generation sends content directly without retrieval, so a hard cap prevents
 
 Building StudyBot taught me that AI applications are less about the model and more about the **pipeline around it**. Gemini is powerful, but without good chunking, retrieval, and prompt design, it either hallucinates or fails to use the provided material at all.
 
-I also learned that the gap between "works on my test case" and "works reliably" is where most of the engineering happens — handling scanned PDFs, malformed JSON responses, missing API keys, and oversized inputs. These edge cases are invisible until a real user tries the tool.
+StudyBot is a tool, so depending on who is using it, it could be misused. It could be used to generate quiz questions from exam papers or copyrighted textbooks, effectively helping students cheat rather than learn. A future safeguard could be limiting the bot to materials the user explicitly marks as their own notes rather than published works.
 
-The RAG pattern specifically showed me why grounding LLMs in retrieved context matters: without it, the model answers from training data rather than the student's actual material, which defeats the entire purpose of a personalized study tool.
+Collaborating with AI during this project was genuinely useful but required critical judgment. One helpful suggestion was using `pdfplumber` for PDF extraction and switching from markdown header splitting to paragraph-based chunking for PDF text. One suggestion that was flawed was the initial quiz prompt design: the AI suggested asking Gemini to "generate questions from the document," which produced vague, surface-level questions. It took several prompt iterations, adding explicit instructions to test understanding rather than definitions, and requiring strict JSON formatting to get reliable, useful output.
 
 ---
 
