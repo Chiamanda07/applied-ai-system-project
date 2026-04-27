@@ -14,6 +14,8 @@ This project was originally built as **DocuBot**. DocuBot answered questions abo
 2. **Generate a quiz** — receive multiple choice questions to test your understanding
 
 StudyBot matters because reading is passive. Asking questions and taking quizzes are active learning strategies that improve retention. By combining PDF text extraction, keyword retrieval, and Gemini's language understanding, StudyBot turns any document into an interactive study session.
+  
+  There's a test run of Studybot in this [demo](https://github.com/Chiamanda07/applied-ai-system-project/raw/main/assets/greek_mythology_demo.mp4) using a greek mythology paper.
 
 ---
 
