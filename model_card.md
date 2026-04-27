@@ -1,147 +1,124 @@
-# DocuBot Model Card
-
-This model card is a short reflection on your DocuBot system. Fill it out after you have implemented retrieval and experimented with all three modes:
-
-1. Naive LLM over full docs  
-2. Retrieval only  
-3. RAG (retrieval plus LLM)
-
-Use clear, honest descriptions. It is fine if your system is imperfect.
+# StudyBot Model Card
 
 ---
 
 ## 1. System Overview
 
-**What is DocuBot trying to do?**  
-Describe the overall goal in 2 to 3 sentences.
+**What is StudyBot trying to do?**
 
-> _Your answer here._
+StudyBot is an AI-powered study assistant that lets students upload a PDF of their study material and interact with it in two ways: asking questions and generating a multiple choice quiz. The goal is to turn passive reading into active learning by grounding every response in the student's own uploaded material.
 
-**What inputs does DocuBot take?**  
-For example: user question, docs in folder, environment variables.
+**What inputs does StudyBot take?**
 
-> _Your answer here._
+- A PDF file path provided by the user at startup
+- A natural language question (Ask mode) or a requested number of quiz questions (Quiz mode)
+- A Gemini API key set in the `.env` file
 
-**What outputs does DocuBot produce?**
+**What outputs does StudyBot produce?**
 
-> _Your answer here._
+- A focused answer drawn from retrieved chunks of the PDF (Ask mode)
+- A multiple choice quiz with 4 options per question, correct answer tracking, and a final score (Quiz mode)
 
 ---
 
 ## 2. Retrieval Design
 
-**How does your retrieval system work?**  
-Describe your choices for indexing and scoring.
+**How does the retrieval system work?**
 
-- How do you turn documents into an index?
-- How do you score relevance for a query?
-- How do you choose top snippets?
+- **Indexing:** The PDF text is split into ~1,000 character chunks using paragraph breaks. An inverted keyword index maps each token to the list of chunk positions where it appears.
+- **Scoring:** Each candidate chunk is scored by counting how many query words appear in it.
+- **Selection:** The top 3 highest-scoring chunks are returned as context for Gemini.
 
-> _Your answer here._
+**What tradeoffs did you make?**
 
-**What tradeoffs did you make?**  
-For example: speed vs precision, simplicity vs accuracy.
-
-> _Your answer here._
+Keyword retrieval is fast and requires no external APIs or vector databases, but it misses paraphrased questions — if the student asks something in different words than the source material uses, relevant chunks may not be retrieved. Semantic embeddings would improve this but add significant cost and complexity. The 1,000 character chunk size balances retrieval precision against context richness; smaller chunks improve precision but lose surrounding context.
 
 ---
 
 ## 3. Use of the LLM (Gemini)
 
-**When does DocuBot call the LLM and when does it not?**  
-Briefly describe how each mode behaves.
+**When does StudyBot call Gemini and when does it not?**
 
-- Naive LLM mode:
-- Retrieval only mode:
-- RAG mode:
+- **Ask mode:** Gemini is called once per question, receiving the top 3 retrieved chunks as context. The retrieval step (keyword index search) does not use Gemini.
+- **Quiz mode:** Gemini is called once per session, receiving the first 8,000 characters of the PDF and returning a JSON array of multiple choice questions.
 
-> _Your answer here._
+**What instructions do you give the LLM to keep it grounded?**
 
-**What instructions do you give the LLM to keep it grounded?**  
-Summarize the rules from your prompt. For example: only use snippets, say "I do not know" when needed, cite files.
-
-> _Your answer here._
+For Ask mode, the prompt instructs Gemini to answer using only the provided excerpts, not to add outside knowledge, and to reply with a specific fallback message if the excerpts are insufficient. For Quiz mode, the prompt requires a strict JSON format, exactly 4 options per question labeled A–D, and instructs Gemini to test understanding of key concepts rather than surface definitions.
 
 ---
 
 ## 4. Experiments and Comparisons
 
-Run the **same set of queries** in all three modes. Fill in the table with short notes.
+StudyBot replaces the original three DocuBot modes with two study-focused modes. The table below reflects observations from testing Ask mode (RAG) against the kind of questions a student would actually ask.
 
-You can reuse or adapt the queries from `dataset.py`.
+| Query | RAG: helpful or not? | Notes |
+|-------|----------------------|-------|
+| What is the main topic of this chapter? | Helpful | Retrieves relevant intro chunks accurately |
+| What are the differences between X and Y? | Partially helpful | Depends on whether both concepts appear in the same chunk |
+| Define [term not in the PDF] | Safe refusal | Returns fallback message correctly |
+| Vague question with no keywords | Not helpful | Keyword index finds no candidates; returns fallback |
 
-| Query | Naive LLM: helpful or harmful? | Retrieval only: helpful or harmful? | RAG: helpful or harmful? | Notes |
-|------|---------------------------------|--------------------------------------|---------------------------|-------|
-| Example: Where is the auth token generated? | | | | |
-| Example: How do I connect to the database? | | | | |
-| Example: Which endpoint lists all users? | | | | |
-| Example: How does a client refresh an access token? | | | | |
+**What patterns did you notice?**
 
-**What patterns did you notice?**  
-
-- When does naive LLM look impressive but untrustworthy?  
-- When is retrieval only clearly better?  
-- When is RAG clearly better than both?
-
-> _Your answer here._
+RAG works best when the question uses words that appear in the material. Vague or paraphrased questions expose the weakness of keyword retrieval — the index finds nothing and Gemini correctly refuses rather than guessing. Quiz mode performs better on dense, concept-rich material than on PDFs with mostly diagrams or tables.
 
 ---
 
 ## 5. Failure Cases and Guardrails
 
-**Describe at least two concrete failure cases you observed.**  
-For each one, say:
+**Failure case 1: Scanned/image-based PDF**
+- Question: User uploads a scanned textbook page
+- What happened: `pdfplumber` extracted no text; the bot loaded silently with no content and returned fallback messages for every question
+- What should happen: Immediate error message at startup — now fixed with a `ValueError` if extracted text is empty
 
-- What was the question?  
-- What did the system do?  
-- What should have happened instead?
+**Failure case 2: Gemini returns malformed JSON for quiz**
+- Question: Generate 5 quiz questions
+- What happened: Gemini wrapped the JSON array in markdown code fences (` ```json ... ``` `), causing `json.loads` to throw an exception
+- What should happen: Strip code fences before parsing — now fixed with regex preprocessing
 
-> _Failure case 1 here._
+**When should StudyBot say it doesn't know?**
 
-> _Failure case 2 here._
+- When no chunks are retrieved because the question keywords don't match anything in the PDF
+- When the retrieved chunks exist but don't contain enough information to answer confidently
 
-**When should DocuBot say “I do not know based on the docs I have”?**  
-Give at least two specific situations.
+**What guardrails are implemented?**
 
-> _Your answer here._
-
-**What guardrails did you implement?**  
-Examples: refusal rules, thresholds, limits on snippets, safe defaults.
-
-> _Your answer here._
+- Rejects non-PDF files and missing paths at startup
+- Raises a clear error if the PDF has no extractable text
+- Caps quiz context at 8,000 characters to avoid token limit errors
+- Wraps quiz JSON parsing in try/except to prevent crashes on malformed responses
+- Prompts the user to re-enter if their quiz answer is not A, B, C, or D
+- Warns and disables LLM modes if `GEMINI_API_KEY` is missing
 
 ---
 
 ## 6. Limitations and Future Improvements
 
-**Current limitations**  
-List at least three limitations of your DocuBot system.
+**Current limitations**
 
-1. _Limitation 1_
-2. _Limitation 2_
-3. _Limitation 3_
+1. Keyword retrieval misses paraphrased questions — if the student's wording differs from the PDF's wording, relevant chunks are not found
+2. Quiz generation only uses the first 8,000 characters, so content from later pages is never tested
+3. No memory between questions — each Ask query is independent with no conversation history
+4. Quality depends entirely on the PDF; poorly formatted or scanned documents produce poor results
 
-**Future improvements**  
-List two or three changes that would most improve reliability or usefulness.
+**Future improvements**
 
-1. _Improvement 1_
-2. _Improvement 2_
-3. _Improvement 3_
+1. Replace keyword retrieval with semantic embeddings (e.g. sentence-transformers) for better handling of paraphrased questions
+2. Expand quiz context by sampling chunks from across the whole document rather than just the first 8,000 characters
+3. Add conversation memory so follow-up questions can reference previous answers
 
 ---
 
 ## 7. Responsible Use
 
-**Where could this system cause real world harm if used carelessly?**  
-Think about wrong answers, missing information, or over trusting the LLM.
+**Where could this system cause real-world harm if used carelessly?**
 
-> _Your answer here._
+StudyBot answers only from the provided material, which limits hallucination risk but introduces a new one: if the uploaded PDF contains incorrect or biased information, StudyBot will reflect it without warning. Additionally, the system could be misused to generate quiz questions from exam papers or copyrighted textbooks, facilitating academic dishonesty rather than genuine learning.
 
-**What instructions would you give real developers who want to use DocuBot safely?**  
-Write 2 to 4 short bullet points.
+**Guidelines for safe use**
 
-- _Guideline 1_
-- _Guideline 2_
-- _Guideline 3 (optional)_
-
----
+- Always verify important answers against the original source — StudyBot is a study aid, not an authority
+- Only upload materials you own or have permission to use
+- Do not rely on StudyBot for high-stakes decisions; treat its answers as a starting point for further review
+- Be aware that scanned or image-heavy PDFs will produce no output — use text-based PDFs only
