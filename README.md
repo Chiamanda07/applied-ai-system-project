@@ -178,6 +178,10 @@ Quiz generation sends content directly without retrieval, so a hard cap prevents
 - Retrieval quality depends heavily on chunk size; too large and precision drops, too small and context is lost
 - Guardrails need to be designed upfront, not added after; silent failures (empty PDF, no API key) are harder to debug than loud ones
 
+**Demo — Greek Mythology PDF**
+
+https://github.com/Chiamanda07/applied-ai-system-project/raw/main/assets/greek_mythology_demo.mp4
+
 ---
 
 ## Reflection
