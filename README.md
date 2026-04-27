@@ -206,6 +206,6 @@ Collaborating with AI during this project was genuinely useful but required crit
 - [x] Returns a safe fallback message if no relevant snippets are retrieved
 - [x] Wraps quiz JSON parsing in a try/except so a bad response doesn't crash the app
 - [x] Caps PDF context at 8,000 characters before sending to Gemini
-- [x] Warn the user immediately if the PDF has no extractable text (e.g. scanned/image-only PDF)
+- [x] Warn the user immediately if the PDF has no extractable text (e.g. scanned/image-only PDF).
 - [x] Prompt the user to re-enter their answer if they type something other than A, B, C, or D
 - [x] Handle the case where Gemini returns fewer questions than requested.
